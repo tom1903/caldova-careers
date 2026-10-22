@@ -31,18 +31,45 @@ test.describe('Open roles listing', () => {
         { title: 'Senior Frontend Engineer', location: 'Remote (US & Canada)' },
         { title: 'Financial Analyst', location: 'Woodinville, WA, USA' },
     ]) {
-        test(`keeps ${title} location on details, not starter cards`, async ({ page }) => {
+        test(`shows ${title} location on its card and details page`, async ({ page }) => {
             await page.goto('/');
             const card = page.getByTestId('role-card').filter({
                 has: page.getByRole('heading', { name: title, exact: true }),
             });
 
             await expect(card).toBeVisible();
-            await expect(card.getByText(location, { exact: true })).toHaveCount(0);
+            await expect(card.getByTestId('role-location')).toHaveText(location);
             await card.click();
             await expect(page.getByText(location, { exact: true })).toBeVisible();
         });
     }
+
+    test('filters roles by department and location, and resets both filters', async ({ page }) => {
+        await page.goto('/');
+
+        const visibleCards = page.locator('[data-testid="role-card"]:visible');
+        const departmentFilter = page.getByTestId('department-filter');
+        const locationFilter = page.getByTestId('location-filter');
+
+        await departmentFilter.selectOption({ label: 'Finance' });
+        await expect(visibleCards).toHaveCount(2);
+
+        await locationFilter.selectOption({ label: 'Woodinville, WA, USA' });
+        await expect(visibleCards).toHaveCount(1);
+        await expect(visibleCards.first().getByRole('heading')).toHaveText('Financial Analyst');
+
+        await page.getByTestId('filter-reset').click();
+        await expect(visibleCards).toHaveCount(expectedRoleCount);
+    });
+
+    test('shows an empty state when no role matches the filters', async ({ page }) => {
+        await page.goto('/');
+        await page.getByTestId('department-filter').selectOption({ label: 'Technology' });
+        await page.getByTestId('location-filter').selectOption({ label: 'Woodinville, WA, USA' });
+
+        await expect(page.locator('[data-testid="role-card"]:visible')).toHaveCount(0);
+        await expect(page.getByTestId('empty-state')).toBeVisible();
+    });
 
     test('has no automatically detectable accessibility violations', async ({ page }) => {
         await page.goto('/');
