@@ -7,6 +7,18 @@
  */
 import type { Job } from '../types/job';
 
+/** Filter jobs by department and location, combining any selected criteria. */
+export function filterJobs<T extends Pick<Job, 'department' | 'location'>>(
+    jobs: T[],
+    filters: { department?: string; location?: string },
+): T[] {
+    return jobs.filter((job) => {
+        const matchesDepartment = !filters.department || job.department === filters.department;
+        const matchesLocation = !filters.location || job.location === filters.location;
+        return matchesDepartment && matchesLocation;
+    });
+}
+
 /** Return jobs sorted by posted date, newest first (does not mutate input). */
 export function sortByNewest(jobs: Job[]): Job[] {
     return [...jobs].sort(

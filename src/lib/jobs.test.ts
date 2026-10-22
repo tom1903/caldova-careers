@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortByNewest, formatPostedDate } from './jobs';
+import { filterJobs, sortByNewest, formatPostedDate } from './jobs';
 import type { Job } from '../types/job';
 
 function makeJob(slug: string, postedDate: string): Job {
@@ -14,6 +14,30 @@ function makeJob(slug: string, postedDate: string): Job {
         summary: 'A role.',
     };
 }
+
+describe('filterJobs', () => {
+    const jobs = [
+        { department: 'Technology', location: 'Remote' },
+        { department: 'Finance', location: 'Woodinville' },
+        { department: 'Finance', location: 'Helsinki' },
+    ];
+
+    it('returns all jobs when no filters are selected', () => {
+        expect(filterJobs(jobs, {})).toEqual(jobs);
+    });
+
+    it('filters by department or location independently', () => {
+        expect(filterJobs(jobs, { department: 'Finance' })).toEqual(jobs.slice(1));
+        expect(filterJobs(jobs, { location: 'Remote' })).toEqual(jobs.slice(0, 1));
+    });
+
+    it('combines department and location filters', () => {
+        expect(filterJobs(jobs, { department: 'Finance', location: 'Helsinki' }))
+            .toEqual([jobs[2]]);
+        expect(filterJobs(jobs, { department: 'Technology', location: 'Helsinki' }))
+            .toEqual([]);
+    });
+});
 
 describe('sortByNewest', () => {
     it('orders jobs by posted date, newest first', () => {
